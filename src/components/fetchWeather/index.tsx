@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 export default function fetchWeather(props: IProp) {
 
     const { city, searchClicked } = props;
-    const apiKey = `1df316b49fd6f51d4ea3b65ff029026f`;
+    const apiKey = process.env.NEXT_PUBLIC_API;
     const [currentWeather, setCurrentWeather] = useState<ICurrentWeather | null>(null);
     const [forecastWeather, setForecastWeather] = useState<IForecastWeather[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
