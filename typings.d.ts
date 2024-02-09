@@ -4,6 +4,7 @@ interface ICurrentWeather {
     };
     weather: {
         main: string;
+        icon: string;
     }[];
     wind: {
         speed: number;
@@ -18,6 +19,7 @@ interface IForecastWeather {
     weather: {
         main: string;
         description: string;
+        icon: string;
     }[];
     wind: {
         speed: number;

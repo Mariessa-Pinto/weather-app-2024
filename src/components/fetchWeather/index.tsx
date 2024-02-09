@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 
 export default function fetchWeather(props: IProp) {
@@ -8,11 +9,12 @@ export default function fetchWeather(props: IProp) {
     const [currentWeather, setCurrentWeather] = useState<ICurrentWeather | null>(null);
     const [forecastWeather, setForecastWeather] = useState<IForecastWeather[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchWeatherData = async () => {
-            if (!searchClicked || !city.trim()) { 
-                return; 
+            if (!searchClicked || !city.trim()) {
+                return;
             }
 
             try {
@@ -32,6 +34,7 @@ export default function fetchWeather(props: IProp) {
                 const forecastWeatherData = await forecastWeatherResponse.json();
                 setForecastWeather(forecastWeatherData.list);
                 console.log(forecastWeather);
+                setIsDataLoaded(true);
             } catch (error) {
                 console.error("Error fetching weather data", error);
                 setErrorMessage("Error fetching weather data");
@@ -39,13 +42,32 @@ export default function fetchWeather(props: IProp) {
         };
 
         fetchWeatherData();
-    }, [city, apiKey, searchClicked]); 
+    }, [city, apiKey, searchClicked]);
+
+    const groupForecastsByDay = (forecasts: IForecastWeather[]) => {
+        const groupedForecasts: { [key: string]: IForecastWeather[] } = {};
+        forecasts.forEach(forecast => {
+            const date = new Date(forecast.dt_txt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            if (!groupedForecasts[date]) {
+                groupedForecasts[date] = [];
+            }
+            groupedForecasts[date].push(forecast);
+        });
+        return groupedForecasts;
+    };
 
     return (
-        <div>
+        <div className={`container mx-auto`}>
             {
                 currentWeather && (
                     <div>
+                        <h2>Current Weather</h2>
+                        <Image
+                            src={`/icons/${currentWeather.weather[0].icon}.svg`}
+                            alt='weather icon'
+                            height={50}
+                            width={60}
+                        />
                         <div>Temperature: {(currentWeather.main.temp - 273.15).toFixed(1)} °C</div>
                         <div>Weather: {currentWeather.weather[0].main}</div>
                         <div>Wind Speed: {currentWeather.wind.speed} m/s</div>
@@ -53,18 +75,33 @@ export default function fetchWeather(props: IProp) {
                     </div>
                 )
             }
-
-            {
-                forecastWeather.map((forecast, index) => (
-                    <div key={index}>
-                        <div>Date: {new Date(forecast.dt_txt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
-                        <div>Temperature: {(forecast.main.temp - 273.15).toFixed(1)} °C</div>
-                        <div>Weather: {forecast.weather[0].main}</div>
-                        <div>Description: {forecast.weather[0].description}</div>
-                        <div>Wind Speed: {forecast.wind.speed} m/s</div>
-                    </div>
-                ))
-            }
+            {searchClicked && isDataLoaded && (
+                <div>
+                    <h2>Every 3 Hours For Next 5 Days</h2>
+                    {Object.entries(groupForecastsByDay(forecastWeather)).map(([date, forecasts], index) => (
+                        <div key={index}>
+                            <h3>{date}</h3>
+                            <div className="flex flex-wrap">
+                                {forecasts.map((forecast, i) => (
+                                    <div key={i} className="w-1/4 p-4 border">
+                                        <div>Time: {new Date(forecast.dt_txt).toLocaleTimeString("en-US", { hour: 'numeric', hour12: true })}</div>
+                                        <Image
+                                            src={`/icons/${forecast.weather[0].icon}.svg`}
+                                            alt='weather icon'
+                                            height={50}
+                                            width={60}
+                                        />
+                                        <div>Temperature: {(forecast.main.temp - 273.15).toFixed(1)} °C</div>
+                                        <div>Weather: {forecast.weather[0].main}</div>
+                                        <div>Description: {forecast.weather[0].description}</div>
+                                        <div>Wind Speed: {forecast.wind.speed} m/s</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }
