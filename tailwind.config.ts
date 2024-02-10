@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        poppins: ['Poppins', 'sans-serif']
+      },
       colors: {
         'regal-blue': '#516799',
         'medium-blue': '#86ACC7',
